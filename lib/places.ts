@@ -1,5 +1,6 @@
 import type { Place, ReliefMode, TravelMode } from "./types";
 import { haversine } from "./geo";
+import { queryOverpass, type OverpassResult } from "./overpass";
 
 export interface Category {
   id: string;
@@ -122,13 +123,15 @@ export function categoriesFor(mode: ReliefMode, travel: TravelMode): string[] {
   return Array.from(new Set([...BY_MODE[mode], ...BY_TRAVEL[travel]]));
 }
 
-const MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass.openstreetmap.fr/api/interpreter",
-];
-
 const cache = new Map<string, { at: number; data: Place[] }>();
+
+export function buildQuery(lat: number, lon: number, radius: number, catIds: string[], timeout = 12): string {
+  const body = catIds
+    .filter((id) => CATEGORIES[id])
+    .flatMap((id) => CATEGORIES[id].selectors.map((s) => `nwr${s}(around:${radius},${lat},${lon});`))
+    .join("");
+  return `[out:json][timeout:${timeout}];(${body});out center tags 400;`;
+}
 
 export async function fetchPlaces(
   lat: number,
@@ -151,71 +154,50 @@ export async function fetchPlaces(
     /* storage unavailable */
   }
 
-  const body = catIds
-    .flatMap((id) => CATEGORIES[id].selectors.map((s) => `nwr${s}(around:${radius},${lat},${lon});`))
-    .join("");
-  const query = `[out:json][timeout:12];(${body});out center tags 400;`;
-
-  // Ask every mirror at once and use whichever answers first; retry once if all are busy.
-  const askMirror = async (url: string) => {
-    const res = await fetch(url, {
-      method: "POST",
-      body: "data=" + encodeURIComponent(query),
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(10_000)]) : AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) throw new Error(`Overpass ${res.status}`);
-    const text = await res.text();
-    if (!text.trimStart().startsWith("{")) throw new Error("Overpass busy");
-    const parsed = JSON.parse(text);
-    if (parsed.remark && /error|timeout/i.test(parsed.remark) && !(parsed.elements?.length)) throw new Error("Overpass timeout");
-    return parsed;
-  };
-
-  let lastErr: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const json = await Promise.any(MIRRORS.map(askMirror));
-      const seen = new Set<string>();
-      const out: Place[] = [];
-      for (const el of json.elements ?? []) {
-        const t: Record<string, string> = el.tags ?? {};
-        const plat = el.lat ?? el.center?.lat;
-        const plon = el.lon ?? el.center?.lon;
-        if (plat === undefined || plon === undefined) continue;
-        const cat = catIds.find((id) => CATEGORIES[id].match(t));
-        if (!cat) continue;
-        const name = t.name || t["name:en"] || t.brand || t.operator || CATEGORIES[cat].label;
-        const id = `${el.type}/${el.id}`;
-        if (seen.has(id)) continue;
-        seen.add(id);
-        out.push({
-          id,
-          name,
-          lat: plat,
-          lon: plon,
-          cat,
-          hours: t.opening_hours,
-          phone: t.phone || t["contact:phone"],
-          distance: haversine(lat, lon, plat, plon),
-        });
-      }
-      out.sort((a, b) => a.distance - b.distance);
-      cache.set(key, { at: Date.now(), data: out });
-      try {
-        localStorage.setItem("cs:" + key, JSON.stringify({ at: Date.now(), data: out }));
-      } catch {
-        /* storage full or unavailable */
-      }
-      return out;
-    } catch (e) {
-      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-      lastErr = e;
-      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
-      if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
-    }
+  // 1) our own server route: asks every mirror server-side (no browser CORS limits) and is CDN-cached
+  let json: OverpassResult | null = null;
+  try {
+    const url = `/api/places?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}&r=${radius}&cats=${encodeURIComponent(catIds.join(","))}`;
+    const res = await fetch(url, { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(35_000)]) : AbortSignal.timeout(35_000) });
+    if (res.ok) json = await res.json();
+  } catch {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   }
-  throw lastErr instanceof Error ? lastErr : new Error("Map data unavailable");
+  // 2) fallback: ask the mirrors directly from the browser
+  if (!json) json = await queryOverpass(buildQuery(lat, lon, radius, catIds), { signal, attempts: 2 });
+
+  const seen = new Set<string>();
+  const out: Place[] = [];
+  for (const el of json.elements ?? []) {
+    const t: Record<string, string> = el.tags ?? {};
+    const plat = el.lat ?? el.center?.lat;
+    const plon = el.lon ?? el.center?.lon;
+    if (plat === undefined || plon === undefined) continue;
+    const cat = catIds.find((id) => CATEGORIES[id].match(t));
+    if (!cat) continue;
+    const name = t.name || t["name:en"] || t.brand || t.operator || CATEGORIES[cat].label;
+    const id = `${el.type}/${el.id}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      id,
+      name,
+      lat: plat,
+      lon: plon,
+      cat,
+      hours: t.opening_hours,
+      phone: t.phone || t["contact:phone"],
+      distance: haversine(lat, lon, plat, plon),
+    });
+  }
+  out.sort((a, b) => a.distance - b.distance);
+  cache.set(key, { at: Date.now(), data: out });
+  try {
+    localStorage.setItem("cs:" + key, JSON.stringify({ at: Date.now(), data: out }));
+  } catch {
+    /* storage full or unavailable */
+  }
+  return out;
 }
 
 type GeoHit = { name: string; lat: number; lon: number };

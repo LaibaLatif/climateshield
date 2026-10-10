@@ -4,6 +4,8 @@
 
 When the weather turns, people on foot, bicycles, motorbikes, cars and buses all need different help. ClimateShield reads live weather for your location, finds the nearest *relevant* relief points on a real map, and uses Gemini to turn all of that into a personal safety plan.
 
+**🔗 Live demo: https://climateshield-relief.vercel.app** (works on phone and desktop)
+
 ## Features
 
 - **Live weather and risk level** from Open-Meteo, including feels-like, UV, wind, rain chance, US AQI and a "rain starts in N minutes" alert.
@@ -23,9 +25,10 @@ When the weather turns, people on foot, bicycles, motorbikes, cars and buses all
 ```
 Browser (Next.js / React / Leaflet)
  ├─ Open-Meteo        → weather, forecast, air quality, geocoding
- ├─ Overpass (OSM)    → real nearby relief points
  ├─ routing.openstreetmap.de → road geometry for selected points
- └─ /api/advice, /api/chat  (server routes, hold the Gemini key)
+ └─ Next.js server routes (backend)
+      ├─ /api/places  → OpenStreetMap (Overpass) relief points, tried across several mirrors and edge-cached
+      └─ /api/advice, /api/chat → hold the Gemini key and call Gemini
         └─ Gemini API  → structured JSON plan / grounded chat
 ```
 
