@@ -1,61 +1,85 @@
-# 🛡️ ClimateShield
+# ClimateShield
 
-**A weather-aware relief finder with an AI preparedness advisor.** Built for ForgeHacks 2026 · Track: **AI + Climate**.
+**Know where to go when the weather turns.** ClimateShield is a weather-aware relief finder with an AI safety advisor. Built for **ForgeHacks 2026, AI + Climate track**.
 
-When the weather turns, people on foot, bicycles, motorbikes, cars and buses all need different help. ClimateShield reads live weather for your location, finds the nearest *relevant* relief points on a real map, and uses Gemini to turn all of that into a personal safety plan.
+**Live demo: https://climateshield-relief.vercel.app** (works on phone and desktop, no sign-up)
 
-**🔗 Live demo: https://climateshield-relief.vercel.app** (works on phone and desktop)
+## The problem
 
-## Features
+Sudden rain, heatwaves and cold snaps hit commuters, riders, drivers, elderly people and outdoor workers hardest. Weather apps show numbers. Maps show everything. Nothing connects the two to a safe place you can actually reach right now, the way you actually travel.
 
-- **Live weather and risk level** from Open-Meteo, including feels-like, UV, wind, rain chance, US AQI and a "rain starts in N minutes" alert.
-- **Dynamic weather themes.** The whole UI (colors, sky, particles, map tint) changes with the condition: sunny, night, cloudy, rain, thunderstorm with lightning, snow, fog, heatwave and cold wave. A *Preview weather* bar lets you demo any of them.
-- **Travel-mode aware**: walking, bicycle, motorbike, car, bus. Range is set in minutes or metres, and ETAs use mode-specific speeds. Drivers and riders also get fuel, covered parking, repair, EV charging and rest areas. Bus users get covered bus stops.
-- **Relief map**: real OpenStreetMap data via Overpass.
-  - Heat: drinking water, cafés, malls, pharmacies, libraries.
-  - Cold: shelters, warm food, community centres.
-  - Rain: covered stops, umbrella and raincoat shops, covered parking.
-  - Hover for details. Select 1 or 2 points to get a road route, distance and ETA for your travel mode.
-- **AI Preparedness Advisor** (Gemini): a structured plan with a risk level, timed actions, best stops (chosen only from real nearby places), journey tips and warning signs. It is tailored to your situation: elderly, children, asthma, outdoor worker, pregnant, no shelter.
-- **Ask the advisor**: chat grounded in the live weather and real nearby places.
-- Works without a key: if Gemini is not configured or fails, the app falls back to rule-based advice and says so.
+## What it does
+
+- **Live weather and risk level** from Open-Meteo: feels-like temperature, humidity, wind, UV, rain chance, air quality (US AQI), a 12-hour forecast, and a "rain in N minutes" alert.
+- **Weather-adaptive interface.** The whole UI (colors, sky animation, map tint) changes with the weather: sunny, night, cloudy, rain, thunderstorm, snow, fog, heatwave, cold wave. A "Preview weather" menu lets you demo any of them.
+- **Travel-mode aware** for walking, bicycle, motorbike, car and bus. Range can be set from 1 minute or 100 m. Walkers get cool or warm places; riders and drivers also get fuel, covered parking, repair and EV charging; bus users get covered stops.
+- **Relief map from real OpenStreetMap data.** The place types change with the weather (heat: water, cool indoor spots, pharmacies; rain: covered stops, umbrella shops; cold: shelters, warm food).
+- **"Need something now?"** shows the single nearest water point, pharmacy, hospital, fuel stop and so on, with distance and travel time for your mode, and draws the route in one tap.
+- **Measure between two places** with real road distance and time, and open directions in one tap.
+- **AI safety plan and chat.** Gemini turns live weather, your travel mode and the real nearby places into a timed plan (what to do and when), and answers questions such as "I feel dizzy from the heat" or "My fingers are numb, is it frostbite?" with first-aid steps.
+- **Search any area**, including sectors and streets (for example "F-10 Islamabad"), or use your current location.
+
+## How the AI is used
+
+| Part | AI or normal logic |
+|---|---|
+| Safety plan and chat answers | **Gemini**: receives live weather, rain timing, air quality, travel mode and the real nearby places, and returns a structured plan or a short answer |
+| Weather risk level, place filtering, distances, travel times, routes | Normal logic (rules, geometry, OpenStreetMap routing) |
+
+Design choices so the AI is not "just a wrapper":
+
+- **Grounded:** the model only sees live data and the real places list, and is told never to invent places.
+- **Validated:** its place recommendations are checked against the real list, and unknown places are dropped.
+- **Structured output:** the plan is requested as JSON against a schema, so the UI can render it reliably.
+- **Safe by design:** it gives general guidance, never diagnoses, and tells users when to call emergency services.
+- **Graceful fallback:** if the AI is unavailable or rate-limited, the app shows standard safety guidance and says so.
 
 ## Architecture
 
 ```
 Browser (Next.js / React / Leaflet)
- ├─ Open-Meteo        → weather, forecast, air quality, geocoding
- ├─ routing.openstreetmap.de → road geometry for selected points
- └─ Next.js server routes (backend)
-      ├─ /api/places  → OpenStreetMap (Overpass) relief points, tried across several mirrors and edge-cached
-      └─ /api/advice, /api/chat → hold the Gemini key and call Gemini
-        └─ Gemini API  → structured JSON plan / grounded chat
+ |- Open-Meteo                      weather, forecast, air quality
+ |- routing.openstreetmap.de        road geometry between selected points
+ '- Next.js server routes (Vercel)
+      |- /api/places                OpenStreetMap (Overpass) relief points, several mirrors, edge-cached
+      |- /api/advice                builds the prompt, calls Gemini, validates the plan
+      '- /api/chat                  grounded chat via Gemini
 ```
 
-The Gemini key stays on the server and is never sent to the browser.
+The Gemini key lives only on the server and is never sent to the browser.
+
+## Tech stack
+
+Next.js 16, React 19, TypeScript, Leaflet, Gemini API, Open-Meteo, OpenStreetMap (Overpass, Nominatim, OSRM), Vercel.
 
 ## Run locally
 
 ```bash
 npm install
-cp .env.local.example .env.local   # then paste your key after GEMINI_API_KEY=
+cp .env.local.example .env.local    # then paste your key after GEMINI_API_KEY=
 npm run dev
 ```
 
-Open http://localhost:3000. Get a free key at https://aistudio.google.com/apikey.
+Open http://localhost:3000. Get a free key at https://aistudio.google.com/apikey. Variables:
+
+- `GEMINI_API_KEY` (required for AI features)
+- `GEMINI_MODEL` (optional, defaults to `gemini-flash-lite-latest`)
+
+Without a key the app still works and shows standard safety guidance instead of AI plans.
 
 ## Deploy
 
-Import the repo on Vercel and add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) under *Settings → Environment Variables*.
+Import the repository on Vercel and add `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) under Settings, Environment Variables.
+
+## Limits
+
+- Place data comes from community-edited OpenStreetMap, so coverage and opening hours vary by area.
+- Travel times are estimates and do not include live traffic.
+- Public map servers can be slow at times, so results are cached and several mirrors are tried.
+- ClimateShield gives general safety guidance, not medical advice.
 
 ## Roadmap
 
-- **Community points:** let anyone register a new relief point (for example a free water cooler or a shop that sells raincoats) and let others confirm, report or review it, with moderation. This needs a database and sign-in, so it is planned after the hackathon.
-- Live alerts by push notification when rain or a heat spike is about to hit your saved places.
-- Urdu and other local languages for the advisor.
-
-## Notes and limits
-
-- Map data comes from free public OpenStreetMap servers, so results depend on local OSM coverage and the servers can be busy at times.
-- Walking and driving times are estimates, not live traffic.
-- ClimateShield gives general safety guidance, not medical advice.
+- Community-added places with reviews and moderation.
+- Push alerts for rain and heat at saved places.
+- Local languages for the advisor.
