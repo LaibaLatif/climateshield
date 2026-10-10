@@ -2,14 +2,16 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AdviceRequest, Condition, Place, Profile, ReliefMode, TravelMode, Weather } from "@/lib/types";
-import { CONDITION_META, SIM_OPTIONS, fetchWeather, simulate } from "@/lib/weather";
-import { CATEGORIES, categoriesFor, fetchPlaces, reverseName, searchCity } from "@/lib/places";
+import { CONDITION_META, fetchWeather, simulate } from "@/lib/weather";
+import { categoriesFor, fetchPlaces, reverseName, searchCity } from "@/lib/places";
 import { etaMinutes, metersForMinutes } from "@/lib/geo";
 import WeatherBackdrop from "@/components/WeatherBackdrop";
 import WeatherHero from "@/components/WeatherHero";
 import Controls, { type Unit } from "@/components/Controls";
 import PlacesList from "@/components/PlacesList";
 import AdvisorPanel from "@/components/AdvisorPanel";
+import Navbar from "@/components/Navbar";
+import { About, BackToTop, Footer, HowItWorks, Intro, SectionHeader } from "@/components/Sections";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
   ssr: false,
@@ -261,29 +263,16 @@ export default function Home() {
     <>
       <WeatherBackdrop condition={condition} />
       <div className="page">
-        <header className="topbar">
-          <div className="brand">
-            <div className="logo">🛡️</div>
-            <div>
-              <h1>ClimateShield</h1>
-              <small>Weather-aware relief finder · AI preparedness advisor</small>
-            </div>
-          </div>
-          <div className="sim glass">
-            <span className="sim-title">Preview weather</span>
-            <button className={sim === null ? "on" : ""} onClick={() => setSim(null)}>📡 Live</button>
-            {SIM_OPTIONS.map((o) => (
-              <button key={o.id} className={sim === o.id ? "on" : ""} onClick={() => setSim(o.id)} title={`Simulate ${o.label}`}>
-                {o.emoji}<span className="lbl"> {o.label}</span>
-              </button>
-            ))}
-          </div>
-        </header>
+        <Navbar weather={weather} condition={condition} sim={sim} onSim={setSim} />
 
-        {locNote && <div className="notice banner">{locNote}</div>}
+        <section id="overview" className="section overview">
+          <Intro onLocate={locate} />
+          {locNote && <div className="notice banner">{locNote}</div>}
+          <WeatherHero weather={weather} locationName={loc.name} loading={weatherLoading} />
+        </section>
 
-        <WeatherHero weather={weather} locationName={loc.name} loading={weatherLoading} />
-
+        <section id="explore" className="section">
+        <SectionHeader eyebrow="Explore" title="Relief points near you" text="Pick how you travel and how far you will go. The map shows only what helps in today's weather." />
         <div className="layout">
           <Controls
             travel={travel}
@@ -344,12 +333,16 @@ export default function Home() {
             />
           </div>
         </div>
+        </section>
 
-        <AdvisorPanel request={request} stamp={stamp} onFocusPlace={onFocus} />
+        <div className="section">
+          <AdvisorPanel request={request} stamp={stamp} onFocusPlace={onFocus} />
+        </div>
 
-        <footer className="foot">
-          Built for ForgeHacks 2026 · AI + Climate · Data: Open-Meteo, OpenStreetMap contributors, Gemini API · Categories shown: {Object.keys(CATEGORIES).length}
-        </footer>
+        <HowItWorks />
+        <About />
+        <Footer />
+        <BackToTop />
       </div>
     </>
   );

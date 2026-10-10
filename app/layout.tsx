@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
+import "./shell.css";
 
 export const metadata: Metadata = {
   title: "ClimateShield · Weather-aware relief finder & AI preparedness advisor",
