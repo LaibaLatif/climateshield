@@ -146,10 +146,12 @@ export default function AdvisorPanel({ request, stamp, onFocusPlace }: Props) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const chatEnd = useRef<HTMLDivElement>(null);
+  const chatLog = useRef<HTMLDivElement>(null);
 
+  // scroll only the chat box (never the page), and only once there are messages
   useEffect(() => {
-    chatEnd.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const el = chatLog.current;
+    if (el && (msgs.length > 0 || sending)) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [msgs, sending]);
 
   const generate = async () => {
@@ -287,12 +289,11 @@ export default function AdvisorPanel({ request, stamp, onFocusPlace }: Props) {
             <button key={s} className="chip" onClick={() => send(s)} disabled={!request || sending}>{s}</button>
           ))}
         </div>
-        <div className="chat-log">
+        <div className="chat-log" ref={chatLog}>
           {msgs.map((m, i) => (
             <div key={i} className={`bubble ${m.role}`}>{m.text}</div>
           ))}
           {sending && <div className="bubble assistant typing"><i /><i /><i /></div>}
-          <div ref={chatEnd} />
         </div>
         <div className="chat-form">
           <input
