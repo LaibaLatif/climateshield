@@ -116,9 +116,6 @@ export default function Navbar({ weather, condition, sim, onSim }: Props) {
             )}
           </div>
 
-          <a className="nav-btn gh hide-sm" href="https://github.com/LaibaLatif/climateshield" target="_blank" rel="noreferrer">
-            GitHub ↗
-          </a>
           <button className="burger" onClick={() => setMenu((m) => !m)} aria-label="Open menu" aria-expanded={menu}>
             <span /><span /><span />
           </button>
@@ -130,7 +127,6 @@ export default function Navbar({ weather, condition, sim, onSim }: Props) {
           {LINKS.map((l) => (
             <button key={l.id} className={active === l.id ? "on" : ""} onClick={() => go(l.id)}>{l.label}</button>
           ))}
-          <a href="https://github.com/LaibaLatif/climateshield" target="_blank" rel="noreferrer">GitHub ↗</a>
         </div>
       )}
     </header>

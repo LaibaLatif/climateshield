@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing data" }, { status: 400 });
   }
   if (!hasKey()) {
-    return NextResponse.json({ reply: "The chat needs a Gemini API key. Add GEMINI_API_KEY to .env.local and restart the server." });
+    return NextResponse.json({ reply: "The AI advisor is unavailable right now. For an emergency, contact your local emergency services." });
   }
   body.context.places = (body.context.places ?? []).slice(0, 14);
   try {
@@ -24,6 +24,6 @@ export async function POST(request: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("[chat]", msg);
-    return NextResponse.json({ reply: `Sorry, I could not reach Gemini right now (${msg.slice(0, 120)}).` });
+    return NextResponse.json({ reply: "Sorry, the advisor is busy right now. Please try again in a moment. For an emergency, contact your local emergency services." });
   }
 }

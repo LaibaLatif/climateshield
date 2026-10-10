@@ -195,7 +195,7 @@ export default function AdvisorPanel({ request, stamp, onFocusPlace }: Props) {
       <div className="adv-head">
         <div>
           <h2>🛡️ AI Preparedness Advisor</h2>
-          <p className="muted">Live weather + your travel mode + real nearby places, turned into a personal plan by Gemini.</p>
+          <p className="muted">Live weather, how you travel and the real places around you, turned into a simple personal plan.</p>
         </div>
         <button className="primary" onClick={generate} disabled={!request || loading}>
           {loading ? "Thinking…" : advice ? "↻ Regenerate plan" : "✨ Generate my safety plan"}
@@ -233,7 +233,7 @@ export default function AdvisorPanel({ request, stamp, onFocusPlace }: Props) {
               <h3>{advice.headline}</h3>
               <p>{advice.summary}</p>
             </div>
-            <span className={`src src-${advice.source}`}>{advice.source === "gemini" ? "✦ Gemini AI" : "⚙ Rule-based"}</span>
+            <span className={`src src-${advice.source}`}>{advice.source === "gemini" ? "✦ AI-generated plan" : "Standard safety guidance"}</span>
           </div>
           {advice.note && <div className="notice warn">{advice.note}</div>}
 

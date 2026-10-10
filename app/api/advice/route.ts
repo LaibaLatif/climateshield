@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
   if (!hasKey()) {
     return NextResponse.json(
-      fallbackAdvice(body, "GEMINI_API_KEY is not set, so this plan uses built-in safety rules. Add your key to .env.local to enable Gemini.")
+      fallbackAdvice(body, "The AI advisor is unavailable right now, so this plan uses standard safety guidance.")
     );
   }
   try {
@@ -26,6 +26,6 @@ export async function POST(request: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("[advice]", msg);
-    return NextResponse.json(fallbackAdvice(body, `Gemini request failed (${msg}). Showing rule-based advice instead.`));
+    return NextResponse.json(fallbackAdvice(body, "The AI advisor is busy right now, so this plan uses standard safety guidance. Try again in a minute."));
   }
 }

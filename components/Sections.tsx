@@ -16,7 +16,7 @@ const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavio
 export function Intro({ onLocate }: { onLocate: () => void }) {
   return (
     <section className="intro" aria-labelledby="intro-title">
-      <span className="eyebrow">AI + Climate · ForgeHacks 2026</span>
+      <span className="eyebrow">Weather-smart travel safety</span>
       <h1 id="intro-title">Know where to go <span className="grad">when the weather turns.</span></h1>
       <p className="intro-sub">
         ClimateShield reads live weather for where you are, finds the nearest places that actually help for how you travel — on foot, bike, motorbike, car or bus — and turns it all into a personal AI safety plan.
@@ -33,10 +33,10 @@ export function Intro({ onLocate }: { onLocate: () => void }) {
 }
 
 const STEPS = [
-  { n: "1", icon: "🌦️", title: "Sense", text: "Live temperature, feels-like, rain timing and air quality for your exact location, turned into a clear risk level." },
-  { n: "2", icon: "📍", title: "Find", text: "Real places from OpenStreetMap — water, shelter, pharmacies, fuel, covered parking — filtered by the weather and how you travel." },
-  { n: "3", icon: "🧠", title: "Advise", text: "Gemini AI builds a timed safety plan and answers questions about heat, cold, rain and injuries, using only places that really exist nearby." },
-  { n: "4", icon: "🧭", title: "Go", text: "See distance and time by your travel mode, measure between two points, and open directions in one tap." },
+  { n: "1", icon: "🌦️", title: "Check", text: "See live temperature, how it really feels, when rain is coming and the air quality, summed up as a clear risk level." },
+  { n: "2", icon: "📍", title: "Find", text: "Get the nearest water, shelter, pharmacies, fuel stops and covered parking that make sense for today's weather and how you travel." },
+  { n: "3", icon: "🧠", title: "Get advice", text: "Receive a simple plan with what to do and when, and ask questions about heat, cold, rain or feeling unwell." },
+  { n: "4", icon: "🧭", title: "Go", text: "See how far each place is and how long it takes by your travel mode, then open directions in one tap." },
 ];
 
 export function HowItWorks() {
@@ -56,7 +56,13 @@ export function HowItWorks() {
   );
 }
 
-const STACK = ["Next.js 16", "React 19", "TypeScript", "Leaflet", "Gemini API", "Open-Meteo", "OpenStreetMap / Overpass", "Vercel"];
+const BENEFITS = [
+  "Works for walking, cycling, motorbike, car and bus",
+  "Shows only places that help in today's weather",
+  "Distance and time for how you actually travel",
+  "Plain-language advice you can act on straight away",
+  "Free to use, no sign-up, no app to install",
+];
 
 export function About() {
   return (
@@ -72,12 +78,12 @@ export function About() {
           <p>Pedestrians, cyclists, motorbike riders, drivers, bus commuters, elderly people, parents and anyone caught outside without cover.</p>
         </article>
         <article className="glass about-card">
-          <h3>Technology</h3>
-          <div className="chips">{STACK.map((t) => <span key={t} className="chip static">{t}</span>)}</div>
-          <h3>Data sources</h3>
-          <p>Weather and air quality from Open-Meteo. Places and routes from OpenStreetMap contributors. Advice from Google Gemini, grounded in the live data on screen.</p>
-          <h3>Limits &amp; roadmap</h3>
-          <p>Map coverage depends on OpenStreetMap, and travel times are estimates, not live traffic. Next: community-added points with reviews, push alerts for rain and heat, and local languages.</p>
+          <h3>What you get</h3>
+          <ul className="benefits">{BENEFITS.map((b) => <li key={b}>{b}</li>)}</ul>
+          <h3>Good to know</h3>
+          <p>Places come from open community maps, so coverage can vary by area. Travel times are estimates and do not include live traffic. Advice is general guidance, not medical care.</p>
+          <h3>Coming soon</h3>
+          <p>Places added and reviewed by the community, rain and heat alerts, and more languages.</p>
         </article>
       </div>
     </section>
@@ -90,7 +96,7 @@ export function Footer() {
       <div className="footer-grid">
         <div>
           <div className="footer-brand"><span className="logo sm">🛡️</span> ClimateShield</div>
-          <p className="muted">Weather-aware relief finder and AI preparedness advisor. Built for ForgeHacks 2026, AI + Climate track.</p>
+          <p className="muted">Find safe places and get clear advice when the weather turns, wherever and however you travel.</p>
         </div>
         <div>
           <h4>Explore</h4>
@@ -102,11 +108,10 @@ export function Footer() {
           </ul>
         </div>
         <div>
-          <h4>Project</h4>
+          <h4>Credits</h4>
           <ul>
-            <li><a href="https://github.com/LaibaLatif/climateshield" target="_blank" rel="noreferrer">Source code ↗</a></li>
-            <li><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo ↗</a></li>
-            <li><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors ↗</a></li>
+            <li><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data: Open-Meteo ↗</a></li>
+            <li><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">Map data: © OpenStreetMap contributors ↗</a></li>
           </ul>
         </div>
       </div>

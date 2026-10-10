@@ -185,7 +185,7 @@ export default function Home() {
         .catch((e) => {
           if ((e as Error)?.name === "AbortError") return;
           setAllPlaces([]);
-          setPlacesError("Map data is busy right now. This is the free OpenStreetMap service.");
+          setPlacesError("Nearby places are taking longer than usual to load.");
           setPlacesLoading(false);
         });
     }, 450);
